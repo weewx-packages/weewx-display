@@ -12,8 +12,6 @@ at commit a5c09b186447e25f11326a77bc21c2ef828b6f08. It ships here until a releas
 WeeWX includes it as weewx.jsongenerator.
 """
 
-import os
-
 from weecfg.extension import ExtensionInstaller
 
 REPORT = 'DisplayReport'
@@ -26,7 +24,7 @@ def loader():
 class DisplayInstaller(ExtensionInstaller):
     def __init__(self):
         super().__init__(
-            version='0.1.0',
+            version='0.1.1',
             name='display',
             description='Data for a wall display: live readings, history, records, '
                         'forecast, sun and moon.',
@@ -38,6 +36,9 @@ class DisplayInstaller(ExtensionInstaller):
                     REPORT: {
                         'skin': 'Display',
                         'enable': 'true',
+                        # WeeWX puts the HTML_ROOT of [StdReport] in front, which gives
+                        # public_html/display or /var/www/html/weewx/display.
+                        'HTML_ROOT': 'display',
                     },
                 },
                 'Display': {
@@ -56,17 +57,3 @@ class DisplayInstaller(ExtensionInstaller):
                                         'skins/Display/lang/en.conf']),
             ],
         )
-
-    def configure(self, engine):
-        # The report writes into a subdirectory of the HTML_ROOT of [StdReport]. A
-        # relative HTML_ROOT in the report's own section would be taken relative to
-        # WEEWX_ROOT, not to that HTML_ROOT. A package install has it at
-        # /var/www/html/weewx, a pip install at public_html, so it is worked out here.
-        # An HTML_ROOT the user has set already stays as it is.
-        std_report = engine.config_dict.get('StdReport', {})
-        if 'HTML_ROOT' not in std_report.get(REPORT, {}):
-            html_root = std_report.get('HTML_ROOT', 'public_html')
-            self['config']['StdReport'][REPORT]['HTML_ROOT'] = os.path.join(html_root,
-                                                                            'display')
-        # Only the installer's own 'config' changed, which the engine merges next.
-        return False
