@@ -153,7 +153,8 @@ Days of the forecast, today included. Default is `7`.
 
 #### forecast_hours
 
-Hours of the hourly forecast, from the current one. Default is `48`.
+Hours of the hourly forecast, from the current one. Default is `168`, the seven days of
+`forecast_days`.
 
 #### forecast_timeout
 

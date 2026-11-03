@@ -307,7 +307,9 @@ class DisplayForecast(weewx.engine.StdService):
         options = config_dict.get('Display', {})
         self.interval = to_int(options.get('forecast_interval', 3600))
         self.days = to_int(options.get('forecast_days', 7))
-        self.hours = to_int(options.get('forecast_hours', 48))
+        # Seven days of hours, so that the display can show the hours of every day of
+        # the forecast, not only of the next two.
+        self.hours = to_int(options.get('forecast_hours', 168))
         self.timeout = to_float(options.get('forecast_timeout', 20))
         self.stop = threading.Event()
         self.thread = None
