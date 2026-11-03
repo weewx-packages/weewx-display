@@ -1,0 +1,14 @@
+## Copyright (c) 2026 Manuel Hilgert
+## See the file LICENSE.txt for your full rights.
+#errorCatcher Echo
+#encoding UTF-8
+##
+## sky.json holds the sun and the moon, for the time of the report. $sky comes from
+## user.display.DisplaySky. docs/how-it-works.md documents the format. Only the name of
+## the moon's phase is added here, because it is a text of the language file.
+#set $out = {'version': '1.0', 'time': $current.dateTime.raw}
+#if $sky is not None
+  #silent $out.update($sky)
+  #silent $out['moon']['phase_text'] = $gettext('moon_' + $sky['moon']['phase'])
+#end if
+$jsonize($out)

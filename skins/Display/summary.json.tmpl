@@ -1,0 +1,58 @@
+## Copyright (c) 2026 Manuel Hilgert
+## See the file LICENSE.txt for your full rights.
+#errorCatcher Echo
+#encoding UTF-8
+##
+## summary.json holds the archive record, the trends, and the extremes and totals of
+## each period. docs/how-it-works.md documents the format. A type without data in a
+## period is left out of that period, never written as zero.
+#set $options = $DisplayOptions
+#set $out = {'version': '1.0', 'time': $current.dateTime.raw, 'interval': $current.interval.raw}
+##
+#set $now = {}
+#for $x in $to_list($options.get('observations', []))
+  #if $getVar('year.%s.has_data' % $x, False)
+    #set $value = $getVar('current.%s.raw' % $x)
+    #if $value is not None
+      #silent $now[$x] = $rnd($value, 3)
+    #end if
+  #end if
+#end for
+#silent $out['current'] = $now
+##
+#set $trends = {}
+#for $x in $to_list($options.get('trends', []))
+  #if $getVar('year.%s.has_data' % $x, False)
+    #set $change = $getVar('trend.%s.raw' % $x)
+    #if $change is not None
+      #silent $trends[$x] = {'change': $rnd($change, 3), 'over': $trend.time_delta.raw}
+    #end if
+  #end if
+#end for
+#silent $out['trends'] = $trends
+##
+#set $periods = {}
+#for $p in $to_list($options.get('periods', ['day', 'week', 'month', 'year', 'alltime']))
+  #set $tag = $getVar($p)
+  #set $entry = {'start': $tag.start.raw, 'end': $tag.end.raw}
+  #for $x in $to_list($options.get('extremes', []))
+    #if $getVar('%s.%s.has_data' % ($p, $x), False)
+      #set $stats = $getVar('%s.%s' % ($p, $x))
+      #if $stats.max.raw is not None
+        #silent $entry[$x] = {'min': $rnd($stats.min.raw, 3), 'min_t': $stats.mintime.raw,
+                              'max': $rnd($stats.max.raw, 3), 'max_t': $stats.maxtime.raw}
+      #end if
+    #end if
+  #end for
+  #for $x in $to_list($options.get('sums', []))
+    #if $getVar('%s.%s.has_data' % ($p, $x), False)
+      #set $total = $getVar('%s.%s.sum.raw' % ($p, $x))
+      #if $total is not None
+        #silent $entry[$x] = {'sum': $rnd($total, 3)}
+      #end if
+    #end if
+  #end for
+  #silent $periods[$p] = $entry
+#end for
+#silent $out['periods'] = $periods
+$jsonize($out)

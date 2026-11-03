@@ -1,0 +1,32 @@
+# The test suite in a fixed environment. From the repository root:
+#
+#   docker compose -f tests/docker/compose.yml run --rm tests
+#   docker compose -f tests/docker/compose.yml run --rm tests-verbose
+#
+# The source is mounted read-only. Everything the tests write goes to /tmp.
+name: weewx-display-tests
+
+x-tests: &tests
+  build:
+    context: .
+  image: weewx-display/tests:latest
+  working_dir: /src
+  read_only: true
+  tmpfs:
+    - /tmp
+  volumes:
+    - ../..:/src:ro
+  environment:
+    PYTHONPATH: /src/bin
+    PYTHONUNBUFFERED: "1"
+    PYTHONDONTWRITEBYTECODE: "1"
+
+services:
+  tests:
+    <<: *tests
+    command: ["python", "-m", "pytest", "-q", "--timeout=60", "-p", "no:cacheprovider", "tests"]
+
+  tests-verbose:
+    <<: *tests
+    command: ["python", "-m", "pytest", "-v", "-s", "--log-cli-level=INFO", "--timeout=60",
+              "-p", "no:cacheprovider", "tests"]

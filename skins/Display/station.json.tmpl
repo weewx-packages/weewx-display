@@ -1,0 +1,55 @@
+## Copyright (c) 2026 Manuel Hilgert
+## See the file LICENSE.txt for your full rights.
+#errorCatcher Echo
+#encoding UTF-8
+##
+## station.json holds what a client needs to know once: the station, the unit of each
+## reading, how to write each unit, the theme and the texts in the language of the
+## report. docs/how-it-works.md documents the format.
+#set $options = $DisplayOptions
+#set $names = []
+#for $x in $to_list($options.get('observations', [])) + $to_list($options.get('extremes', [])) + $to_list($options.get('sums', []))
+  #if $x not in $names
+    #silent $names.append($x)
+  #end if
+#end for
+#set $types = {}
+#for $x in $names
+  #silent $types[$x] = {'unit': $getVar('unit.unit_type.%s' % $x), 'label': $str($getVar('obs.label.%s' % $x))}
+#end for
+##
+## 'units' covers the units of this report, and those of the forecast, which the
+## display converts into them.
+#set $report_units = dict($unit.group_unit_dict)
+#set $wanted = set($report_units.values())
+#silent $wanted.update(['degree_C', 'km_per_hour', 'mm', 'degree_compass'])
+#set $units = {}
+#for $one_unit in sorted($wanted)
+  #set $entry = {'label': ($unit.label.formatter.get_label_string($one_unit) or '').strip()}
+  #set $format = $unit.format.formatter.get_format_string($one_unit)
+  #if $format
+    #silent $entry['format'] = $format
+  #end if
+  #silent $units[$one_unit] = $entry
+#end for
+##
+#set $chart_types = $options.get('ChartTypes', {})
+#set $charts = []
+#for $name in $to_list($options.get('charts', []))
+  #silent $charts.append({'name': $name, 'type': $chart_types.get($name, 'line')})
+#end for
+##
+#set $out = {'version': '1.0',
+             'location': $str($station.location),
+             'latitude': $display['latitude'],
+             'longitude': $display['longitude'],
+             'altitude': $display['altitude'],
+             'tz': $display['tz'],
+             'types': $types,
+             'report_units': $report_units,
+             'units': $units,
+             'charts': $charts,
+             'directions': $display['directions'],
+             'theme': $display['theme'],
+             'texts': $display['texts']}
+$jsonize($out)
