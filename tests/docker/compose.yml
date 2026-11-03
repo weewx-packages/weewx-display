@@ -12,6 +12,9 @@ x-tests: &tests
   image: weewx-display/tests:latest
   working_dir: /src
   read_only: true
+  # The tests need no network, and without one they cannot pick a subnet that
+  # collides with the LAN.
+  network_mode: none
   tmpfs:
     - /tmp
   volumes:
